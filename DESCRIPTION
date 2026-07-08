@@ -2,7 +2,7 @@ Package: StatINLA
 Title: Interactive Bayesian Spatial and Spatio-Temporal Modeling with INLA
 Version: 0.1.0
 Date: 2026-07-08
-Authors@R: 
+Authors@R:
     person(given = "Manuel",
            family = "Spinola",
            role = c("aut", "cre"),
@@ -39,8 +39,7 @@ Imports:
     INLA,
     inlabru,
     fmesher,
-    sf,
-    terra
+    sf
 Additional_repositories: https://inla.r-inla-download.org/R/stable
 Encoding: UTF-8
 LazyData: true
