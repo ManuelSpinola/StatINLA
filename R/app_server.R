@@ -33,6 +33,16 @@ app_server <- function(input, output, session) {
                 conditionMessage(e))
       })
     }
+
+    # El binario optimizado para Intel MKL (inla.mkl.run) provoca
+    # Segmentation fault en el entorno virtualizado de Connect Cloud.
+    # Forzamos el uso del binario estandar (sin MKL), mas portable.
+    inla_run <- file.path(inla_bin_parent, "64bit", "inla.run")
+    if (file.exists(inla_run)) {
+      Sys.chmod(inla_run, mode = "0755")
+      INLA::inla.setOption(inla.call = inla_run)
+      message("INLA configurado para usar el binario estandar: ", inla_run)
+    }
   }
 
   mod_test_inla_server("test_inla_1")
