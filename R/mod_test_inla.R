@@ -39,11 +39,21 @@ mod_test_inla_server <- function(id) {
         formula <- r ~ x1 + x2
 
         # Informacion de diagnostico sobre el binario de INLA en este entorno
+        bin_path <- tryCatch(INLA::inla.getOption("inla.call"), error = function(e) NA)
         cat("Binario INLA que se va a usar:\n")
-        print(tryCatch(INLA::inla.getOption("inla.call"), error = function(e) e))
-        cat("\nArchivos en bin/linux:\n")
-        bin_dir <- system.file("bin", "linux", package = "INLA")
-        print(list.files(bin_dir, recursive = TRUE, full.names = TRUE))
+        print(bin_path)
+
+        cat("\nIntentando ejecutar el binario directamente (diagnostico crudo del SO):\n")
+        diag <- suppressWarnings(
+          tryCatch(
+            system2(bin_path, args = character(0), stdout = TRUE, stderr = TRUE),
+            error = function(e) paste("Error de R al invocar system2:", conditionMessage(e))
+          )
+        )
+        estado <- attr(diag, "status")
+        cat("Codigo de salida:", if (is.null(estado)) "NA (proceso no devolvio status)" else estado, "\n")
+        cat("Salida cruda:\n")
+        cat(paste(diag, collapse = "\n"))
         cat("\n---\n\n")
 
         salida <- tryCatch(
