@@ -1,0 +1,23 @@
+# R
+.Rhistory
+.RData
+.Rproj.user
+.Renviron
+
+# macOS
+.DS_Store
+
+# renv
+renv/library/
+renv/local/
+renv/lock/
+renv/python/
+renv/staging/
+
+# golem dev files
+dev/
+dev_history.R
+
+# Shiny
+rsconnect/
+
