@@ -11,6 +11,10 @@ app_server <- function(input, output, session) {
   # especificamente para Ubuntu 22.04.5, que coincide con nuestra version
   # de INLA (26.06.08).
   if (Sys.info()[["sysname"]] == "Linux") {
+    # Intento adicional (no confirmado oficialmente, pero inofensivo):
+    # desactivar MKL antes de que INLA elija el binario.
+    Sys.setenv(INLA_DISABLE_MKL = "TRUE")
+
     inla_bin_parent <- system.file("bin", "linux", package = "INLA")
     if (dir.exists(inla_bin_parent)) {
       tryCatch({

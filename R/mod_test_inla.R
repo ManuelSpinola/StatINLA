@@ -38,25 +38,31 @@ mod_test_inla_server <- function(id) {
 
         formula <- r ~ x1 + x2
 
-        # Informacion de diagnostico sobre el binario de INLA en este entorno
         bin_path <- tryCatch(INLA::inla.getOption("inla.call"), error = function(e) NA)
         cat("Binario INLA que se va a usar:\n")
         print(bin_path)
 
-        cat("\nExiste el archivo?:", file.exists(bin_path), "\n")
-        cat("Permiso de ejecucion (0 = si tiene, -1 = no tiene):",
-            file.access(bin_path, mode = 1), "\n")
-        info <- tryCatch(file.info(bin_path), error = function(e) NULL)
-        cat("Tamano del archivo (bytes):",
-            if (!is.null(info)) info$size else NA, "\n")
-        cat("\nPrimeras 2 lineas del archivo (para ver si es un script con shebang):\n")
-        primeras <- tryCatch(
-          readLines(bin_path, n = 2, warn = FALSE),
-          error = function(e) paste("No se pudo leer como texto:", conditionMessage(e))
+        cat("\nContenido completo del script (es pequeno, lo mostramos entero):\n")
+        contenido <- tryCatch(
+          readLines(bin_path, warn = FALSE),
+          error = function(e) paste("No se pudo leer:", conditionMessage(e))
         )
-        print(primeras)
+        cat(paste(contenido, collapse = "\n"))
+        cat("\n\n---\n\n")
 
-        cat("\nIntentando ejecutar el binario directamente (diagnostico crudo del SO):\n")
+        cat("Existe /bin/bash?:", file.exists("/bin/bash"), "\n")
+        cat("Sys.which('bash'):", Sys.which("bash"), "\n\n")
+
+        cat("Intentando ejecutar explicitamente via bash (sin depender del shebang):\n")
+        diag_bash <- suppressWarnings(tryCatch(
+          system2("/bin/bash", args = shQuote(bin_path), stdout = TRUE, stderr = TRUE),
+          error = function(e) paste("Error de R al invocar bash:", conditionMessage(e))
+        ))
+        cat("Codigo de salida:", if (is.null(attr(diag_bash, "status"))) "NA" else attr(diag_bash, "status"), "\n")
+        cat(paste(diag_bash, collapse = "\n"))
+        cat("\n\n---\n\n")
+
+        cat("Intentando ejecutar directamente (sin bash, dejando que el SO use el shebang):\n")
         diag <- suppressWarnings(
           tryCatch(
             system2(bin_path, args = character(0), stdout = TRUE, stderr = TRUE),
@@ -65,7 +71,6 @@ mod_test_inla_server <- function(id) {
         )
         estado <- attr(diag, "status")
         cat("Codigo de salida:", if (is.null(estado)) "NA (proceso no devolvio status)" else estado, "\n")
-        cat("Salida cruda:\n")
         cat(paste(diag, collapse = "\n"))
         cat("\n---\n\n")
 
