@@ -38,22 +38,41 @@ mod_test_inla_server <- function(id) {
 
         formula <- r ~ x1 + x2
 
-        result <- tryCatch(
-          INLA::inla(
-            formula,
-            data = Seeds,
-            family = "binomial",
-            Ntrials = Seeds$n
+        # Informacion de diagnostico sobre el binario de INLA en este entorno
+        cat("Binario INLA que se va a usar:\n")
+        print(tryCatch(INLA::inla.getOption("inla.call"), error = function(e) e))
+        cat("\nArchivos en bin/linux:\n")
+        bin_dir <- system.file("bin", "linux", package = "INLA")
+        print(list.files(bin_dir, recursive = TRUE, full.names = TRUE))
+        cat("\n---\n\n")
+
+        salida <- tryCatch(
+          capture.output(
+            result <- INLA::inla(
+              formula,
+              data = Seeds,
+              family = "binomial",
+              Ntrials = Seeds$n,
+              verbose = TRUE,
+              safe = FALSE
+            )
           ),
           error = function(e) e
         )
 
-        if (inherits(result, "error")) {
+        if (inherits(salida, "error")) {
           cat("ERROR al correr INLA:\n")
-          cat(conditionMessage(result))
+          cat(conditionMessage(salida))
         } else {
-          cat("INLA corrio correctamente en este entorno.\n\n")
-          summary(result)
+          cat("Salida detallada (verbose) de INLA:\n\n")
+          cat(paste(salida, collapse = "\n"))
+          cat("\n\n---\n\n")
+          if (exists("result") && inherits(result, "inla")) {
+            cat("INLA corrio correctamente en este entorno.\n\n")
+            summary(result)
+          } else {
+            cat("INLA no devolvio un resultado valido.\n")
+          }
         }
       })
     }) |> shiny::bindEvent(input$run_test)
