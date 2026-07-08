@@ -43,6 +43,19 @@ mod_test_inla_server <- function(id) {
         cat("Binario INLA que se va a usar:\n")
         print(bin_path)
 
+        cat("\nExiste el archivo?:", file.exists(bin_path), "\n")
+        cat("Permiso de ejecucion (0 = si tiene, -1 = no tiene):",
+            file.access(bin_path, mode = 1), "\n")
+        info <- tryCatch(file.info(bin_path), error = function(e) NULL)
+        cat("Tamano del archivo (bytes):",
+            if (!is.null(info)) info$size else NA, "\n")
+        cat("\nPrimeras 2 lineas del archivo (para ver si es un script con shebang):\n")
+        primeras <- tryCatch(
+          readLines(bin_path, n = 2, warn = FALSE),
+          error = function(e) paste("No se pudo leer como texto:", conditionMessage(e))
+        )
+        print(primeras)
+
         cat("\nIntentando ejecutar el binario directamente (diagnostico crudo del SO):\n")
         diag <- suppressWarnings(
           tryCatch(
