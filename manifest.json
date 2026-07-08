@@ -75,8 +75,8 @@
       }
     },
     "INLA": {
-      "Source": "https://inla.r-inla-download.org/R/testing",
-      "Repository": null,
+      "Source": "INLA",
+      "Repository": "https://inla.r-inla-download.org/R/testing",
       "description": {
         "Package": "INLA",
         "Type": "Package",
@@ -3690,6 +3690,9 @@
     },
     ".renvignore": {
       "checksum": "631306902e0629e4a9b554ac5a1419ae"
+    },
+    ".Rprofile": {
+      "checksum": "de0c0e18bbf533fbbd9815b307271779"
     },
     "app.R": {
       "checksum": "a566245b65a7c5015fcb5418ed2c03d6"
