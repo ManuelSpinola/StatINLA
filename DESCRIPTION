@@ -1,17 +1,47 @@
 Package: StatINLA
-Title: An Amazing Shiny App
-Version: 0.0.0.9000
+Title: Interactive Bayesian Spatial and Spatio-Temporal Modeling with INLA
+Version: 0.1.0
+Date: 2026-07-08
 Authors@R: 
-    person(given = "firstname",
-           family = "lastname",
+    person(given = "Manuel",
+           family = "Spinola",
            role = c("aut", "cre"),
-           email = "your@email.com")
-Description: What the package does (one paragraph).
-License: What license is it under?
-Imports: 
+           email = "mspinola10@gmail.com",
+           comment = c(ORCID = "0000-0002-7839-1908"))
+Description: An interactive and didactic Shiny application for applied Bayesian
+    spatial and spatio-temporal modeling using Integrated Nested Laplace
+    Approximation (INLA) via the inlabru package. Covers log-Gaussian Cox
+    process models for point pattern data, SPDE spatial random fields,
+    spatio-temporal extensions, and integrated species distribution models
+    combining presence-only and presence-absence data sources such as GBIF
+    and eBird. Part of the StatSuite ecosystem, ICOMVIS, Universidad
+    Nacional, Costa Rica.
+License: MIT + file LICENSE
+URL: https://github.com/ManuelSpinola/StatINLA
+BugReports: https://github.com/ManuelSpinola/StatINLA/issues
+Imports:
     config,
     golem,
-    shiny
+    shiny,
+    bslib,
+    bsicons,
+    shinyjs,
+    pkgload,
+    ggplot2,
+    dplyr,
+    tidyr,
+    tibble,
+    purrr,
+    scales,
+    DT,
+    readr,
+    readxl,
+    INLA,
+    inlabru,
+    fmesher,
+    sf,
+    terra
+Additional_repositories: https://inla.r-inla-download.org/R/stable
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+Config/roxygen2/version: 8.0.0
