@@ -222,33 +222,42 @@ mod_test_inla_server <- function(id) {
 
         cat("---\n\n")
 
-        salida <- tryCatch(
-          capture.output(
-            result <- INLA::inla(
-              formula,
-              data = Seeds,
-              family = "binomial",
-              Ntrials = Seeds$n,
-              verbose = TRUE,
-              safe = FALSE
-            )
-          ),
-          error = function(e) e
-        )
+        # Usamos sink() manualmente (en vez de capture.output()) porque
+        # capture.output() DESCARTA toda la salida parcial si la llamada
+        # termina en error -- con sink() la salida queda guardada aunque
+        # inla() truene a medias, que es justo lo que necesitamos ver.
+        con_captura <- textConnection("captura_inla", "w", local = TRUE)
+        sink(con_captura)
+        sink(con_captura, type = "message")
 
-        if (inherits(salida, "error")) {
+        error_inla <- tryCatch({
+          result <- INLA::inla(
+            formula,
+            data = Seeds,
+            family = "binomial",
+            Ntrials = Seeds$n,
+            verbose = TRUE,
+            safe = FALSE
+          )
+          NULL
+        }, error = function(e) e)
+
+        sink(type = "message")
+        sink()
+        close(con_captura)
+
+        cat("Salida detallada (verbose) de INLA (incluso si fallo a medias):\n\n")
+        cat(paste(captura_inla, collapse = "\n"))
+        cat("\n\n---\n\n")
+
+        if (!is.null(error_inla)) {
           cat("ERROR al correr INLA:\n")
-          cat(conditionMessage(salida))
+          cat(conditionMessage(error_inla))
+        } else if (exists("result") && inherits(result, "inla")) {
+          cat("INLA corrio correctamente en este entorno.\n\n")
+          summary(result)
         } else {
-          cat("Salida detallada (verbose) de INLA:\n\n")
-          cat(paste(salida, collapse = "\n"))
-          cat("\n\n---\n\n")
-          if (exists("result") && inherits(result, "inla")) {
-            cat("INLA corrio correctamente en este entorno.\n\n")
-            summary(result)
-          } else {
-            cat("INLA no devolvio un resultado valido.\n")
-          }
+          cat("INLA no devolvio un resultado valido.\n")
         }
       })
     }) |> shiny::bindEvent(input$run_test)
