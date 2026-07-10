@@ -34,6 +34,19 @@ mod_test_inla_server <- function(id) {
       shiny::req(input$run_test)
 
       shiny::withProgress(message = "Corriendo modelo INLA...", {
+
+        # --- Prueba minima, antes que nada: puede R correr CUALQUIER
+        # subproceso en este entorno? Esto no depende de INLA ni del
+        # binario que zzz.R descarga -- si esto falla, el problema es
+        # de la plataforma (Connect Cloud), no de INLA.
+        cat("Prueba minima: puede R correr CUALQUIER subproceso?\n")
+        prueba_echo <- tryCatch(
+          system2("echo", "hola_mundo", stdout = TRUE, stderr = TRUE),
+          error = function(e) paste("FALLO incluso con echo:", conditionMessage(e))
+        )
+        cat(paste(prueba_echo, collapse = "\n"))
+        cat("\n\n---\n\n")
+
         data(Seeds, package = "INLA")
 
         formula <- r ~ x1 + x2
