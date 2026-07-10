@@ -3680,6 +3680,9 @@
     "NAMESPACE": {
       "checksum": "5aa41ebd076bf06b187a48eb57b846a5"
     },
+    "R/_disable_autoload.R": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
     "R/app_config.R": {
       "checksum": "101d0db44ff4b38d31b00e65422283c8"
     },
