@@ -84,6 +84,14 @@ mod_test_inla_server <- function(id) {
         cat(paste(file_info, collapse = "\n"))
         cat("\n\n")
 
+        cat("Contenido completo de la carpeta del binario (para ver si 'inla' realmente esta ahi):\n")
+        archivos_carpeta <- tryCatch(
+          list.files(dirname(bin_path), all.files = TRUE, full.names = FALSE),
+          error = function(e) paste("No se pudo listar la carpeta:", conditionMessage(e))
+        )
+        cat(paste(archivos_carpeta, collapse = "\n"))
+        cat("\n\n")
+
         # --- Es la CARPETA la que bloquea la ejecucion, no el archivo?
         # Creamos un script trivial ("echo hola") y probamos correrlo
         # desde dos carpetas distintas: una temporal (deberia poder
