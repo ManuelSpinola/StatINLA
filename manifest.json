@@ -377,17 +377,17 @@
         "RemoteRepo": "StatINLA",
         "RemoteUsername": "ManuelSpinola",
         "RemoteRef": "HEAD",
-        "RemoteSha": "ef2accd8e4c145d9e74118a2854417a8d7e0c4f4",
+        "RemoteSha": "d11f58846b71258ee1e9e8057094026a75267cc1",
         "GithubRepo": "StatINLA",
         "GithubUsername": "ManuelSpinola",
         "GithubRef": "HEAD",
-        "GithubSHA1": "ef2accd8e4c145d9e74118a2854417a8d7e0c4f4",
+        "GithubSHA1": "d11f58846b71258ee1e9e8057094026a75267cc1",
         "NeedsCompilation": "no",
-        "Packaged": "2026-07-10 16:17:21 UTC; manuel_nuevo",
+        "Packaged": "2026-07-10 16:28:14 UTC; manuel_nuevo",
         "Author": "Manuel Spinola [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-7839-1908>)",
         "Maintainer": "Manuel Spinola <mspinola10@gmail.com>",
         "Depends": "R (>= 4.1.0)",
-        "Built": "R 4.6.0; ; 2026-07-10 16:17:22 UTC; unix"
+        "Built": "R 4.6.0; ; 2026-07-10 16:28:15 UTC; unix"
       }
     },
     "attempt": {
