@@ -1,16 +1,21 @@
 #' Ajustes del paquete al cargarse
 #'
-#' Confirmado con evidencia directa: en Linux (Posit Connect Cloud, que
-#' corre Ubuntu 22.04 con GLIBC 2.35), el binario "inla.mkl" que trae el
-#' paquete de fabrica requiere GLIBC 2.38, una version mas nueva de la que
-#' tiene el sistema. Por eso descargamos el build compilado
-#' especificamente para Ubuntu 22.04.5, que trae el binario real "inla"
-#' (compatible con GLIBC 2.35) junto a su envoltorio "inla.run".
+#' Confirmado con evidencia directa de dos formas distintas:
+#' 1. GLIBC: en Linux (Posit Connect Cloud, Ubuntu 22.04, GLIBC 2.35), el
+#'    binario "inla.mkl" de builds recientes (26.06.08) pedia GLIBC 2.38.
+#' 2. Segfault real: incluso descargando el build especifico para Ubuntu
+#'    22.04.5, el UNICO binario que INLA distribuye ahi es "inla.mkl" (la
+#'    variante sin MKL, "inla" a secas, ya no viene incluida en ningun
+#'    build reciente) -- y ese binario MKL muere con "Segmentation fault"
+#'    en el entorno virtualizado de Connect Cloud. Es un problema conocido
+#'    de MKL: al arrancar, intenta detectar automaticamente que
+#'    instrucciones especiales soporta el procesador, y esa deteccion
+#'    puede fallar en maquinas virtuales/contenedores.
 #'
-#' Importante: el chequeo de "ya esta listo" revisa el binario REAL
-#' ("inla"), no solo el envoltorio ("inla.run") -- el envoltorio viene
-#' incluido de fabrica aunque el binario real no este, y eso hizo que la
-#' primera version de este parche se saltara la descarga sin darse cuenta.
+#' La solucion: usar directamente "inla.mkl.run" (ya no tiene caso buscar
+#' una alternativa que no existe), pero forzando a MKL a usar un conjunto
+#' de instrucciones mas conservador y compatible (SSE4_2) en vez de dejar
+#' que intente detectar el procesador por su cuenta.
 #'
 #' @param libname,pkgname Parametros internos requeridos por R para el
 #'   hook de carga de paquetes. No se usan directamente aqui.
@@ -21,45 +26,26 @@
     return(invisible(NULL))
   }
 
+  # Le pedimos a MKL que use un set de instrucciones conservador y
+  # compatible con casi cualquier procesador, en vez de auto-detectar
+  # (la auto-deteccion es la que falla en el entorno virtualizado de
+  # Connect Cloud y provoca el segmentation fault).
+  Sys.setenv(MKL_ENABLE_INSTRUCTIONS = "SSE4_2")
+
   inla_bin_parent <- system.file("bin", "linux", package = "INLA")
   if (!dir.exists(inla_bin_parent)) {
     return(invisible(NULL))
   }
 
-  inla_run <- file.path(inla_bin_parent, "64bit", "inla.run")
-  inla_bin <- file.path(inla_bin_parent, "64bit", "inla")
+  inla_mkl_run <- file.path(inla_bin_parent, "64bit", "inla.mkl.run")
 
-  # Solo si el binario REAL no esta, descargamos el build para Ubuntu
-  # 22.04.5 (GLIBC 2.35), que es el que coincide con Connect Cloud.
-  if (!file.exists(inla_bin)) {
-    tryCatch({
-      tgz_url <- paste0(
-        "https://inla.r-inla-download.org/Linux-builds/",
-        "Ubuntu-22.04.5%20LTS%20(Jammy%20Jellyfish)%20x86_64/",
-        "Version_26.06.08/64bit.tgz"
-      )
-      tmp <- tempfile(fileext = ".tgz")
-      utils::download.file(tgz_url, tmp, mode = "wb", quiet = TRUE)
-      utils::untar(tmp, exdir = inla_bin_parent)
-      unlink(tmp)
-      Sys.chmod(
-        list.files(inla_bin_parent, recursive = TRUE, full.names = TRUE),
-        mode = "0755"
-      )
-      message("Binario de INLA para Ubuntu 22.04 (GLIBC 2.35) instalado correctamente.")
-    }, error = function(e) {
-      message("No se pudo instalar el binario de INLA para Ubuntu 22.04: ",
-              conditionMessage(e))
-    })
-  }
-
-  if (file.exists(inla_bin) && file.exists(inla_run)) {
-    Sys.chmod(inla_run, mode = "0755")
-    Sys.chmod(inla_bin, mode = "0755")
-    INLA::inla.setOption(inla.call = inla_run)
-    message("INLA configurado para usar el binario estandar (Ubuntu 22.04): ", inla_run)
+  if (file.exists(inla_mkl_run)) {
+    Sys.chmod(inla_mkl_run, mode = "0755")
+    INLA::inla.setOption(inla.call = inla_mkl_run)
+    message("INLA configurado para usar inla.mkl.run con MKL_ENABLE_INSTRUCTIONS=SSE4_2: ",
+            inla_mkl_run)
   } else {
-    message("No se encontro un binario de INLA compatible con GLIBC 2.35 en: ", inla_bin)
+    message("No se encontro ningun binario de INLA en: ", inla_mkl_run)
   }
 
   invisible(NULL)
