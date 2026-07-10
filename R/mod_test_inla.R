@@ -157,6 +157,56 @@ mod_test_inla_server <- function(id) {
         cat(paste(diag, collapse = "\n"))
         cat("\n---\n\n")
 
+        # --- Prueba con processx: distingue si el proceso murio por una
+        # SENAL del sistema (ej. segmentation fault) en vez de terminar
+        # con un error normal. system2() no logra distinguir esto -- por
+        # eso veiamos "error in running command" sin mas detalle.
+        cat("Prueba con processx (detecta si el proceso muere por una senal, ej. segmentation fault):\n\n")
+
+        if (requireNamespace("processx", quietly = TRUE)) {
+          interpretar_estado <- function(status) {
+            señales <- c(
+              `1` = "SIGHUP", `2` = "SIGINT", `3` = "SIGQUIT",
+              `4` = "SIGILL (instruccion ilegal para este procesador)",
+              `6` = "SIGABRT (aborto)",
+              `8` = "SIGFPE (error de punto flotante)",
+              `9` = "SIGKILL (proceso matado a la fuerza, posiblemente por limite de memoria)",
+              `11` = "SIGSEGV (segmentation fault)",
+              `13` = "SIGPIPE"
+            )
+            if (is.null(status) || is.na(status)) {
+              return("Estado NA/NULL -- processx no pudo determinar como termino el proceso")
+            }
+            if (status >= 128) {
+              num_senal <- status - 128
+              nombre <- señales[as.character(num_senal)]
+              if (is.na(nombre)) nombre <- paste("senal desconocida numero", num_senal)
+              return(sprintf("Codigo %d: el proceso murio por una SENAL del sistema (%s), no fue un error normal del programa.", status, nombre))
+            }
+            sprintf("Codigo %d (el programa termino por si solo, sin senal del sistema)", status)
+          }
+
+          resultado_px <- tryCatch({
+            px <- processx::run(
+              command = bin_path,
+              args = character(0),
+              error_on_status = FALSE,
+              timeout = 30
+            )
+            list(status = px$status, stdout = px$stdout, stderr = px$stderr)
+          }, error = function(e) {
+            list(status = NA, stdout = "", stderr = paste("Error al invocar processx:", conditionMessage(e)))
+          })
+
+          cat("Interpretacion:", interpretar_estado(resultado_px$status), "\n\n")
+          cat("stdout capturado:\n", resultado_px$stdout, "\n")
+          cat("stderr capturado:\n", resultado_px$stderr, "\n\n")
+        } else {
+          cat("El paquete processx no esta disponible en este entorno.\n\n")
+        }
+
+        cat("---\n\n")
+
         salida <- tryCatch(
           capture.output(
             result <- INLA::inla(
