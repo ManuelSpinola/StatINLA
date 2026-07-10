@@ -92,6 +92,13 @@ mod_test_inla_server <- function(id) {
         cat(paste(archivos_carpeta, collapse = "\n"))
         cat("\n\n")
 
+        # Ademas de cat() (que solo se ve en el cuadro de resultado de la
+        # app, y se puede perder si el navegador se desconecta), mandamos
+        # esto tambien por message(), que SI queda guardado en la pestana
+        # de Logs de Connect Cloud -- igual que los mensajes de zzz.R.
+        message("Contenido de la carpeta del binario INLA (", dirname(bin_path), "): ",
+                paste(archivos_carpeta, collapse = ", "))
+
         # --- Es la CARPETA la que bloquea la ejecucion, no el archivo?
         # Creamos un script trivial ("echo hola") y probamos correrlo
         # desde dos carpetas distintas: una temporal (deberia poder
