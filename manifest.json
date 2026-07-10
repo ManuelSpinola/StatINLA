@@ -366,7 +366,7 @@
       "Repository": null,
       "description": {
         "Package": "StatINLA",
-        "Title": "Interactive Bayesian Spatial and Spatio-Temporal Modeling with\nINLA",
+        "Title": "Interactive Bayesian Spatial and Spatio-Temporal Modeling with INLA",
         "Version": "0.1.0",
         "Date": "2026-07-08",
         "Authors@R": "\n    person(given = \"Manuel\",\n           family = \"Spinola\",\n           role = c(\"aut\", \"cre\"),\n           email = \"mspinola10@gmail.com\",\n           comment = c(ORCID = \"0000-0002-7839-1908\"))",
@@ -374,26 +374,11 @@
         "License": "MIT + file LICENSE",
         "URL": "https://github.com/ManuelSpinola/StatINLA",
         "BugReports": "https://github.com/ManuelSpinola/StatINLA/issues",
-        "Imports": "config, golem, shiny, bslib, bsicons, shinyjs, pkgload,\nggplot2, dplyr, tidyr, tibble, purrr, scales, DT, readr,\nreadxl, INLA, inlabru, fmesher, sf",
+        "Imports": "config,\ngolem,\nshiny,\nbslib,\nbsicons,\nshinyjs,\npkgload,\nggplot2,\ndplyr,\ntidyr,\ntibble,\npurrr,\nscales,\nDT,\nreadr,\nreadxl,\nINLA,\ninlabru,\nfmesher,\nsf",
         "Additional_repositories": "https://inla.r-inla-download.org/R/stable",
         "Encoding": "UTF-8",
-        "Config/roxygen2/version": "8.0.0",
-        "RemoteType": "github",
-        "RemoteHost": "api.github.com",
-        "RemoteRepo": "StatINLA",
-        "RemoteUsername": "ManuelSpinola",
-        "RemoteRef": "HEAD",
-        "RemoteSha": "ea774ae667bdb69f1a7c522cb4b5eb333e458ec4",
-        "GithubRepo": "StatINLA",
-        "GithubUsername": "ManuelSpinola",
-        "GithubRef": "HEAD",
-        "GithubSHA1": "ea774ae667bdb69f1a7c522cb4b5eb333e458ec4",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-07-08 13:44:57 UTC; manuel_nuevo",
-        "Author": "Manuel Spinola [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-7839-1908>)",
-        "Maintainer": "Manuel Spinola <mspinola10@gmail.com>",
-        "Depends": "R (>= 4.1.0)",
-        "Built": "R 4.6.0; ; 2026-07-08 13:44:57 UTC; unix"
+        "LazyData": "true",
+        "Config/roxygen2/version": "8.0.0"
       }
     },
     "attempt": {
@@ -3699,7 +3684,7 @@
       "checksum": "101d0db44ff4b38d31b00e65422283c8"
     },
     "R/app_server.R": {
-      "checksum": "724916e7e602173cb0322f657d5e458f"
+      "checksum": "7a71ce6c6281d5f353265d456d55ee98"
     },
     "R/app_ui.R": {
       "checksum": "59e97d88129aadb6b65867b47451cf5e"
@@ -3709,6 +3694,9 @@
     },
     "R/run_app.R": {
       "checksum": "476011bbc4ffefa824e5bfb8386d849b"
+    },
+    "R/zzz.R": {
+      "checksum": "3c5dcf9ec3765ff1a77b90de562775c2"
     },
     "README.md": {
       "checksum": "90d287c7fc7fe1a77a8097441bf5ea1c"
