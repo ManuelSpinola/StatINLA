@@ -84,6 +84,32 @@ mod_test_inla_server <- function(id) {
         cat(paste(file_info, collapse = "\n"))
         cat("\n\n")
 
+        # --- Es la CARPETA la que bloquea la ejecucion, no el archivo?
+        # Creamos un script trivial ("echo hola") y probamos correrlo
+        # desde dos carpetas distintas: una temporal (deberia poder
+        # ejecutar) y la misma carpeta donde vive el binario de INLA.
+        # Si el de tempdir() funciona pero el de INLA no, confirma que
+        # esa carpeta especifica esta montada sin permiso de ejecucion
+        # (comun en contenedores reforzados), sin importar el archivo.
+        cat("Prueba de ejecucion por carpeta (es la carpeta la que bloquea?):\n\n")
+
+        probar_ejecucion_en <- function(carpeta, etiqueta) {
+          script_path <- file.path(carpeta, paste0("prueba_exec_", basename(tempfile()), ".sh"))
+          resultado <- tryCatch({
+            writeLines(c("#!/bin/bash", "echo hola_desde_script"), script_path)
+            Sys.chmod(script_path, mode = "0755")
+            system2(script_path, stdout = TRUE, stderr = TRUE)
+          }, error = function(e) paste("FALLO:", conditionMessage(e)))
+          cat(sprintf("Carpeta (%s): %s\n", etiqueta, carpeta))
+          cat("Resultado:", paste(resultado, collapse = " | "), "\n\n")
+          unlink(script_path)
+        }
+
+        probar_ejecucion_en(tempdir(), "temporal, tempdir()")
+        probar_ejecucion_en(dirname(bin_path), "misma carpeta que el binario de INLA")
+
+        cat("---\n\n")
+
         cat("Usuario con el que corre la app (whoami / id):\n")
         cat(paste(tryCatch(system2("whoami", stdout = TRUE, stderr = TRUE),
                             error = function(e) "No se pudo correr whoami"),
