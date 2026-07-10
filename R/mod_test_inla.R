@@ -50,24 +50,68 @@ mod_test_inla_server <- function(id) {
         cat(paste(contenido, collapse = "\n"))
         cat("\n\n---\n\n")
 
+        # --- Diagnostico de permisos, dueno y tipo de archivo ---
+        cat("Existe el archivo?:", file.exists(bin_path), "\n")
+        cat("R considera que tiene permiso de ejecucion?:",
+            file.access(bin_path, mode = 1) == 0, "\n\n")
+
+        cat("Detalle de permisos y dueno (ls -la):\n")
+        ls_info <- tryCatch(
+          system2("ls", c("-la", shQuote(bin_path)), stdout = TRUE, stderr = TRUE),
+          error = function(e) paste("No se pudo correr ls:", conditionMessage(e))
+        )
+        cat(paste(ls_info, collapse = "\n"))
+        cat("\n\n")
+
+        cat("Tipo de archivo (file), para confirmar que es un binario Linux x86_64 valido:\n")
+        file_info <- tryCatch(
+          system2("file", shQuote(bin_path), stdout = TRUE, stderr = TRUE),
+          error = function(e) paste("No se pudo correr file:", conditionMessage(e))
+        )
+        cat(paste(file_info, collapse = "\n"))
+        cat("\n\n")
+
+        cat("Usuario con el que corre la app (whoami / id):\n")
+        cat(paste(tryCatch(system2("whoami", stdout = TRUE, stderr = TRUE),
+                            error = function(e) "No se pudo correr whoami"),
+                  collapse = " "), "\n")
+        cat(paste(tryCatch(system2("id", stdout = TRUE, stderr = TRUE),
+                            error = function(e) "No se pudo correr id"),
+                  collapse = " "), "\n\n---\n\n")
+
         cat("Existe /bin/bash?:", file.exists("/bin/bash"), "\n")
         cat("Sys.which('bash'):", Sys.which("bash"), "\n\n")
 
+        # --- Intentos de ejecucion, ahora capturando advertencias reales ---
+        # (antes se suprimian con suppressWarnings(), lo que escondia el
+        # mensaje real del sistema operativo, p.ej. "Permission denied" o
+        # "Exec format error")
+
         cat("Intentando ejecutar explicitamente via bash (sin depender del shebang):\n")
-        diag_bash <- suppressWarnings(tryCatch(
-          system2("/bin/bash", args = shQuote(bin_path), stdout = TRUE, stderr = TRUE),
-          error = function(e) paste("Error de R al invocar bash:", conditionMessage(e))
-        ))
+        diag_bash <- withCallingHandlers(
+          tryCatch(
+            system2("/bin/bash", args = shQuote(bin_path), stdout = TRUE, stderr = TRUE),
+            error = function(e) paste("Error de R al invocar bash:", conditionMessage(e))
+          ),
+          warning = function(w) {
+            cat("Advertencia real (bash):", conditionMessage(w), "\n")
+            invokeRestart("muffleWarning")
+          }
+        )
         cat("Codigo de salida:", if (is.null(attr(diag_bash, "status"))) "NA" else attr(diag_bash, "status"), "\n")
         cat(paste(diag_bash, collapse = "\n"))
         cat("\n\n---\n\n")
 
         cat("Intentando ejecutar directamente (sin bash, dejando que el SO use el shebang):\n")
-        diag <- suppressWarnings(
+        diag <- withCallingHandlers(
           tryCatch(
             system2(bin_path, args = character(0), stdout = TRUE, stderr = TRUE),
             error = function(e) paste("Error de R al invocar system2:", conditionMessage(e))
-          )
+          ),
+          warning = function(w) {
+            cat("Advertencia real (directo):", conditionMessage(w), "\n")
+            invokeRestart("muffleWarning")
+          }
         )
         estado <- attr(diag, "status")
         cat("Codigo de salida:", if (is.null(estado)) "NA (proceso no devolvio status)" else estado, "\n")
