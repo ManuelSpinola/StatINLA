@@ -76,19 +76,27 @@
 
   todos_los_archivos <- list.files(alt_dir, recursive = TRUE, full.names = TRUE)
 
-  # Buscamos el binario principal de INLA. Preferimos la variante SIN mkl
-  # si viene incluida; si no, usamos la que haya (sigue siendo una
-  # version distinta a la que ya sabemos que falla).
-  candidatos_inla <- todos_los_archivos[
-    grepl("(^|/)inla(\\.run)?$", todos_los_archivos) |
-      grepl("(^|/)inla\\.mkl\\.run$", todos_los_archivos)
-  ]
-  candidatos_inla <- candidatos_inla[order(grepl("mkl", candidatos_inla))]
+  # Buscamos el binario principal de INLA. IMPORTANTE: preferimos el
+  # script "inla.run" sobre el binario "inla" en crudo. El script se
+  # encarga de indicarle al programa donde estan sus piezas necesarias
+  # (librerias compartidas en las subcarpetas "first" y "external");
+  # sin el, el binario "inla" solo puede fallar con un error de tipo
+  # "no encuentro tal libreria" (esto ya se confirmo: fallaba por no
+  # encontrar libRmath.so.1).
+  orden_preferencia <- c("inla.run", "inla", "inla.mkl.run", "inla.mkl")
+
+  nombre_base <- basename(todos_los_archivos)
+  candidatos_inla <- todos_los_archivos[nombre_base %in% orden_preferencia]
 
   if (length(candidatos_inla) == 0) {
     message("El paquete descargado no contiene ningun binario 'inla' reconocible.")
     return(FALSE)
   }
+
+  # Ordenamos segun la preferencia de arriba (inla.run primero).
+  candidatos_inla <- candidatos_inla[
+    order(match(basename(candidatos_inla), orden_preferencia))
+  ]
 
   inla_bin <- candidatos_inla[1]
   Sys.chmod(inla_bin, mode = "0755")
