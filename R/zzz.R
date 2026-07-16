@@ -3,29 +3,31 @@
 #' HISTORIAL DE INTENTOS PARA RESOLVER EL SEGMENTATION FAULT EN POSIT
 #' CONNECT CLOUD (Ubuntu 22.04, GLIBC 2.35):
 #'
-#' Intento 1 (el actual, primero en probarse):
+#' Intento 1 (primero en probarse):
 #'   Descargar el binario de INLA compilado especificamente para Ubuntu
 #'   22.04.5 LTS (la misma version de Ubuntu que usa Connect Cloud),
 #'   eligiendo automaticamente la carpeta de version que coincide con el
-#'   INLA instalado en este deploy (con respaldo a la ultima version
-#'   confirmada manualmente si no hay coincidencia exacta). Esto evita
-#'   tanto el segmentation fault del binario MKL como el error de
-#'   seccion "stiles" que aparecia al usar un binario de otra version
-#'   de INLA (confirmado en despliegue del 16-jul-2026).
+#'   INLA instalado en este deploy. NOTA (16-jul-2026): para la version
+#'   26.06.08 este binario ya NO existe -- INLA solo distribuye la
+#'   variante MKL para Ubuntu 22.04.5 en esta version. Este intento se
+#'   deja primero por si en una version futura de INLA vuelve a existir
+#'   un binario sin MKL para Ubuntu 22.04; mientras tanto, simplemente
+#'   fallara rapido y pasara al Intento 2.
 #'
-#' Intento 2 (respaldo, si el Intento 1 falla):
-#'   Descargar un binario de INLA mas viejo (Ubuntu 20.04.6, version
-#'   23.05.30-1, mayo 2023), que fue compilado contra una version de
-#'   GLIBC mas baja y es mas probable que sea compatible. Este build es
-#'   anterior al cambio de INLA hacia el paquete "fmesher" (agosto 2023),
-#'   asi que existe una posibilidad real de que el "motor" viejo y la
-#'   "app" moderna no se entiendan del todo.
-#'
-#' Intento 3 (ultimo respaldo):
+#' Intento 2 (el actual, si el Intento 1 falla):
 #'   Usar el binario que trae el paquete instalado (inla.mkl.run, la
 #'   unica variante que INLA distribuye para Ubuntu 22.04.5), forzando
-#'   MKL_ENABLE_INSTRUCTIONS=SSE4_2 para evitar la auto-deteccion de CPU
-#'   que falla en el entorno virtualizado.
+#'   MKL_ENABLE_INSTRUCTIONS=SSE4_2 y MKL_CBWR=COMPATIBLE para evitar la
+#'   auto-deteccion de CPU de MKL, que falla en el entorno virtualizado.
+#'
+#' Intento 3 (ultimo respaldo, si el Intento 2 tambien falla):
+#'   Descargar un binario de INLA mas viejo (Ubuntu 20.04.6, version
+#'   23.05.30-1, mayo 2023), que fue compilado contra una version de
+#'   GLIBC mas baja. Este build es anterior al cambio de INLA hacia el
+#'   paquete "fmesher" (agosto 2023): el "motor" viejo y la "app"
+#'   moderna no se entienden del todo -- confirmado en despliegue del
+#'   16-jul-2026 (error de seccion "stiles"). Se deja como ultimo
+#'   recurso, no como solucion real.
 #'
 #' Si un intento falla por cualquier motivo, el codigo pasa
 #' automaticamente al siguiente, para no perder lo que ya se tenia
@@ -52,16 +54,22 @@
   )
 
   if (!used_2204) {
-    used_2004 <- tryCatch(
-      .use_alt_inla_binary(),
+    used_mkl <- tryCatch(
+      .use_default_mkl_binary(),
       error = function(e) {
-        message("Intento 2 (Ubuntu 20.04) fallo: ", conditionMessage(e))
+        message("Intento 2 (MKL con MKL_CBWR=COMPATIBLE) fallo: ", conditionMessage(e))
         FALSE
       }
     )
 
-    if (!used_2004) {
-      .use_default_mkl_binary()
+    if (!isTRUE(used_mkl)) {
+      tryCatch(
+        .use_alt_inla_binary(),
+        error = function(e) {
+          message("Intento 3 (Ubuntu 20.04) fallo: ", conditionMessage(e))
+          FALSE
+        }
+      )
     }
   }
 
@@ -193,9 +201,9 @@
   TRUE
 }
 
-#' Intento 2 (respaldo): descarga y activa un binario de INLA mas viejo
-#' (Ubuntu 20.04.6, version 23.05.30-1), como alternativa al binario MKL
-#' que viene instalado y que provoca segmentation fault en Connect Cloud.
+#' Intento 3 (ultimo respaldo): descarga y activa un binario de INLA mas
+#' viejo (Ubuntu 20.04.6, version 23.05.30-1), como alternativa al
+#' binario MKL que viene instalado.
 #'
 #' @return TRUE si se activo el binario alternativo, FALSE si no.
 #' @noRd
@@ -251,7 +259,7 @@
   TRUE
 }
 
-#' Ultimo respaldo: usar el inla.mkl.run que ya viene instalado con el
+#' Intento 2: usar el inla.mkl.run que ya viene instalado con el
 #' paquete, forzando instrucciones conservadoras de CPU.
 #'
 #' MKL_ENABLE_INSTRUCTIONS=SSE4_2 (fijado en .onLoad) le pone un techo a
@@ -264,11 +272,13 @@
 #' maquinas distintas) tiene el efecto de forzar a MKL a usar el camino
 #' mas simple posible SIN hacer deteccion de procesador. "COMPATIBLE" es
 #' el valor mas conservador (usa solo instrucciones SSE2).
+#'
+#' @return TRUE si se configuro el binario MKL, FALSE si no se encontro.
 #' @noRd
 .use_default_mkl_binary <- function() {
   inla_bin_parent <- system.file("bin", "linux", package = "INLA")
   if (!dir.exists(inla_bin_parent)) {
-    return(invisible(NULL))
+    return(FALSE)
   }
 
   inla_mkl_run <- file.path(inla_bin_parent, "64bit", "inla.mkl.run")
@@ -278,12 +288,12 @@
     Sys.chmod(inla_mkl_run, mode = "0755")
     INLA::inla.setOption(inla.call = inla_mkl_run)
     message(
-      "INLA configurado para usar inla.mkl.run (respaldo) con ",
+      "INLA configurado para usar inla.mkl.run (Intento 2) con ",
       "MKL_ENABLE_INSTRUCTIONS=SSE4_2 y MKL_CBWR=COMPATIBLE: ", inla_mkl_run
     )
-  } else {
-    message("No se encontro ningun binario de INLA en: ", inla_mkl_run)
+    return(TRUE)
   }
 
-  invisible(NULL)
+  message("No se encontro ningun binario de INLA en: ", inla_mkl_run)
+  FALSE
 }
