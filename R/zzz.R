@@ -118,27 +118,34 @@
 
   versiones_a_probar <- unique(stats::na.omit(c(instalada, LATEST_KNOWN_VERSION)))
 
+  # Håvard senalo una carpeta "devel/" (16-jul-2026) que segun el no
+  # requiere GLIBC 2.38 -- la probamos primero, antes que las carpetas
+  # por numero de version, porque es la sugerencia mas reciente y
+  # especifica que tenemos.
+  urls_a_probar <- c(
+    paste0(base_url, "devel/64bit.tgz"),
+    paste0(base_url, "Version_", versiones_a_probar, "/64bit.tgz")
+  )
+
   tmp_tgz <- tempfile(fileext = ".tgz")
   descargado <- FALSE
-  version_usada <- NA_character_
+  url_usada <- NA_character_
 
-  for (v in versiones_a_probar) {
-    url <- paste0(base_url, "Version_", v, "/64bit.tgz")
+  for (url in urls_a_probar) {
     ok <- tryCatch({
       utils::download.file(url, tmp_tgz, mode = "wb", quiet = TRUE)
       TRUE
     }, error = function(e) FALSE, warning = function(w) FALSE)
     if (ok) {
       descargado <- TRUE
-      version_usada <- v
+      url_usada <- url
       break
     }
   }
 
   if (!descargado) {
-    message("No se encontro binario de Ubuntu 22.04 para ninguna de estas ",
-            "versiones: ", paste(versiones_a_probar, collapse = ", "),
-            ". Revisar manualmente: ", base_url)
+    message("No se encontro ningun binario de Ubuntu 22.04 usable. URLs ",
+            "probadas: ", paste(urls_a_probar, collapse = " | "))
     return(FALSE)
   }
 
@@ -194,8 +201,8 @@
 
   INLA::inla.setOption(inla.call = file.path(inla_bin_dir, "inla.run"))
   message(
-    "INLA configurado para usar binario de Ubuntu 22.04.5 (version ",
-    version_usada, "): ", file.path(inla_bin_dir, "inla.run")
+    "INLA configurado para usar binario de Ubuntu 22.04.5 (fuente: ",
+    url_usada, "): ", file.path(inla_bin_dir, "inla.run")
   )
 
   TRUE
