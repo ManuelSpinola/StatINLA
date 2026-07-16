@@ -134,8 +134,37 @@
     return(FALSE)
   }
 
-  # Reemplaza el contenido de la carpeta 64bit con el binario descargado
-  utils::untar(tmp_tgz, exdir = inla_bin_dir)
+  # Descomprimimos en una carpeta temporal primero, NO directo en
+  # inla_bin_dir. El .tgz de INLA a veces trae los archivos envueltos en
+  # su propia carpeta "64bit/" adentro; si descomprimieramos directo en
+  # inla_bin_dir (que ya se llama "64bit"), quedaria un "64bit/64bit/"
+  # anidado y el script inla.run no encontraria a su binario "inla"
+  # vecino (esto paso en el despliegue del 16-jul-2026).
+  tmp_extract_dir <- tempfile("inla2204_")
+  dir.create(tmp_extract_dir)
+  utils::untar(tmp_tgz, exdir = tmp_extract_dir)
+
+  # Buscamos donde quedaron los archivos reales: si el .tgz traia una
+  # subcarpeta "64bit/", los archivos estan ahi adentro; si no, estan
+  # sueltos en la raiz de lo descomprimido.
+  subcarpetas_64bit <- list.dirs(tmp_extract_dir, recursive = TRUE, full.names = TRUE)
+  subcarpetas_64bit <- subcarpetas_64bit[basename(subcarpetas_64bit) == "64bit"]
+
+  origen <- if (length(subcarpetas_64bit) > 0) subcarpetas_64bit[1] else tmp_extract_dir
+
+  archivos_origen <- list.files(origen, full.names = TRUE, all.files = TRUE)
+  file.copy(archivos_origen, inla_bin_dir, overwrite = TRUE, recursive = TRUE)
+  unlink(tmp_extract_dir, recursive = TRUE)
+
+  # Verificamos que el binario "inla" realmente haya quedado donde debe
+  # antes de dar el reemplazo por exitoso -- si no, no marcamos exito,
+  # para que el proximo intento (o el respaldo de Ubuntu 20.04) se use
+  # en su lugar en vez de repetir este mismo error silenciosamente.
+  if (!file.exists(file.path(inla_bin_dir, "inla"))) {
+    message("El binario 'inla' no quedo donde se esperaba despues de ",
+            "descomprimir. Revisar manualmente: ", base_url)
+    return(FALSE)
+  }
 
   # Asegura permisos de ejecucion en los binarios
   bin_files <- list.files(inla_bin_dir, full.names = TRUE)
