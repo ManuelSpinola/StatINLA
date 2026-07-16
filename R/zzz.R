@@ -253,6 +253,17 @@
 
 #' Ultimo respaldo: usar el inla.mkl.run que ya viene instalado con el
 #' paquete, forzando instrucciones conservadoras de CPU.
+#'
+#' MKL_ENABLE_INSTRUCTIONS=SSE4_2 (fijado en .onLoad) le pone un techo a
+#' que instrucciones puede usar MKL, pero MKL igual hace su propia
+#' deteccion del procesador para decidir el camino de codigo -- y en
+#' maquinas virtuales esa deteccion a veces no coincide con la realidad,
+#' causando el segmentation fault que ya confirmamos en Connect Cloud.
+#'
+#' MKL_CBWR (pensada originalmente para resultados reproducibles entre
+#' maquinas distintas) tiene el efecto de forzar a MKL a usar el camino
+#' mas simple posible SIN hacer deteccion de procesador. "COMPATIBLE" es
+#' el valor mas conservador (usa solo instrucciones SSE2).
 #' @noRd
 .use_default_mkl_binary <- function() {
   inla_bin_parent <- system.file("bin", "linux", package = "INLA")
@@ -263,11 +274,12 @@
   inla_mkl_run <- file.path(inla_bin_parent, "64bit", "inla.mkl.run")
 
   if (file.exists(inla_mkl_run)) {
+    Sys.setenv(MKL_CBWR = "COMPATIBLE")
     Sys.chmod(inla_mkl_run, mode = "0755")
     INLA::inla.setOption(inla.call = inla_mkl_run)
     message(
       "INLA configurado para usar inla.mkl.run (respaldo) con ",
-      "MKL_ENABLE_INSTRUCTIONS=SSE4_2: ", inla_mkl_run
+      "MKL_ENABLE_INSTRUCTIONS=SSE4_2 y MKL_CBWR=COMPATIBLE: ", inla_mkl_run
     )
   } else {
     message("No se encontro ningun binario de INLA en: ", inla_mkl_run)
