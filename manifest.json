@@ -377,17 +377,17 @@
         "RemoteRepo": "StatINLA",
         "RemoteUsername": "ManuelSpinola",
         "RemoteRef": "HEAD",
-        "RemoteSha": "129fd25b4c87706735cb9812fbaa23c7c72ea400",
+        "RemoteSha": "e725bdcf294ebad4f81cd2eac344a3640dcd817f",
         "GithubRepo": "StatINLA",
         "GithubUsername": "ManuelSpinola",
         "GithubRef": "HEAD",
-        "GithubSHA1": "129fd25b4c87706735cb9812fbaa23c7c72ea400",
+        "GithubSHA1": "e725bdcf294ebad4f81cd2eac344a3640dcd817f",
         "NeedsCompilation": "no",
-        "Packaged": "2026-07-10 16:50:38 UTC; manuel_nuevo",
+        "Packaged": "2026-07-16 12:01:55 UTC; manuel_nuevo",
         "Author": "Manuel Spinola [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-7839-1908>)",
         "Maintainer": "Manuel Spinola <mspinola10@gmail.com>",
         "Depends": "R (>= 4.1.0)",
-        "Built": "R 4.6.0; ; 2026-07-10 16:50:38 UTC; unix"
+        "Built": "R 4.6.0; ; 2026-07-16 12:01:55 UTC; unix"
       }
     },
     "attempt": {
@@ -3667,7 +3667,7 @@
       "checksum": "476011bbc4ffefa824e5bfb8386d849b"
     },
     "R/zzz.R": {
-      "checksum": "ed56b73a5a1575029fa277e14c87d2c7"
+      "checksum": "b18bb57640350c7e27586aab43ea06c9"
     },
     "README.md": {
       "checksum": "90d287c7fc7fe1a77a8097441bf5ea1c"
