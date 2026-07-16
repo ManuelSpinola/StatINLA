@@ -135,23 +135,34 @@
   }
 
   # Descomprimimos en una carpeta temporal primero, NO directo en
-  # inla_bin_dir. El .tgz de INLA a veces trae los archivos envueltos en
-  # su propia carpeta "64bit/" adentro; si descomprimieramos directo en
-  # inla_bin_dir (que ya se llama "64bit"), quedaria un "64bit/64bit/"
-  # anidado y el script inla.run no encontraria a su binario "inla"
-  # vecino (esto paso en el despliegue del 16-jul-2026).
+  # inla_bin_dir. El .tgz de INLA puede traer los archivos envueltos en
+  # uno o mas niveles de carpetas adentro (esto varia entre versiones,
+  # ya lo confirmamos en despliegues del 16-jul-2026); si
+  # descomprimieramos directo en inla_bin_dir (que ya se llama "64bit"),
+  # podriamos terminar con carpetas anidadas y el script inla.run no
+  # encontraria a su binario "inla" vecino.
   tmp_extract_dir <- tempfile("inla2204_")
   dir.create(tmp_extract_dir)
   utils::untar(tmp_tgz, exdir = tmp_extract_dir)
 
-  # Buscamos donde quedaron los archivos reales: si el .tgz traia una
-  # subcarpeta "64bit/", los archivos estan ahi adentro; si no, estan
-  # sueltos en la raiz de lo descomprimido.
-  subcarpetas_64bit <- list.dirs(tmp_extract_dir, recursive = TRUE, full.names = TRUE)
-  subcarpetas_64bit <- subcarpetas_64bit[basename(subcarpetas_64bit) == "64bit"]
+  # En vez de asumir cuantos niveles de carpetas hay, buscamos
+  # directamente el archivo "inla" en TODO el arbol descomprimido, sin
+  # importar que tan anidado este, y usamos su carpeta contenedora como
+  # origen. Esto es robusto sin importar como este empaquetado el .tgz.
+  archivos_extraidos <- list.files(tmp_extract_dir, recursive = TRUE,
+                                    full.names = TRUE, all.files = TRUE)
+  ruta_inla <- archivos_extraidos[basename(archivos_extraidos) == "inla"]
 
-  origen <- if (length(subcarpetas_64bit) > 0) subcarpetas_64bit[1] else tmp_extract_dir
+  if (length(ruta_inla) == 0) {
+    message("El .tgz descargado no contiene un archivo 'inla' en ningun ",
+            "nivel. Contenido real del .tgz: ",
+            paste(basename(archivos_extraidos), collapse = ", "),
+            ". Revisar manualmente: ", base_url)
+    unlink(tmp_extract_dir, recursive = TRUE)
+    return(FALSE)
+  }
 
+  origen <- dirname(ruta_inla[1])
   archivos_origen <- list.files(origen, full.names = TRUE, all.files = TRUE)
   file.copy(archivos_origen, inla_bin_dir, overwrite = TRUE, recursive = TRUE)
   unlink(tmp_extract_dir, recursive = TRUE)
@@ -162,7 +173,7 @@
   # en su lugar en vez de repetir este mismo error silenciosamente.
   if (!file.exists(file.path(inla_bin_dir, "inla"))) {
     message("El binario 'inla' no quedo donde se esperaba despues de ",
-            "descomprimir. Revisar manualmente: ", base_url)
+            "copiar. Revisar manualmente: ", base_url)
     return(FALSE)
   }
 
