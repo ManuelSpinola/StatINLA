@@ -179,11 +179,22 @@
                                     full.names = TRUE, all.files = TRUE)
   ruta_inla <- archivos_extraidos[basename(archivos_extraidos) == "inla"]
 
+  # Diagnostico permanente (corre siempre, exito o fallo): registra la
+  # estructura completa de lo que vino en el .tgz, y si trae
+  # libjemalloc.so.2 (dependencia que causo un fallo el 17-jul-2026:
+  # "error while loading shared libraries: libjemalloc.so.2"). Asi, si
+  # vuelve a faltar algo, el proximo log ya trae la respuesta en vez de
+  # tener que pedir otro despliegue de prueba solo para verlo.
+  tiene_jemalloc <- any(basename(archivos_extraidos) == "libjemalloc.so.2")
+  message(
+    "Diagnostico Intento 1 -- contiene libjemalloc.so.2?: ",
+    tiene_jemalloc, ". Estructura completa del .tgz descomprimido: ",
+    paste(archivos_extraidos, collapse = " | ")
+  )
+
   if (length(ruta_inla) == 0) {
     message("El .tgz descargado no contiene un archivo 'inla' en ningun ",
-            "nivel. Contenido real del .tgz: ",
-            paste(basename(archivos_extraidos), collapse = ", "),
-            ". Revisar manualmente: ", base_url)
+            "nivel. Revisar manualmente: ", base_url)
     unlink(tmp_extract_dir, recursive = TRUE)
     return(FALSE)
   }
@@ -192,6 +203,7 @@
   archivos_origen <- list.files(origen, full.names = TRUE, all.files = TRUE)
   file.copy(archivos_origen, inla_bin_dir, overwrite = TRUE, recursive = TRUE)
   unlink(tmp_extract_dir, recursive = TRUE)
+
 
   # Verificamos que el binario "inla" realmente haya quedado donde debe
   # antes de dar el reemplazo por exitoso -- si no, no marcamos exito,
