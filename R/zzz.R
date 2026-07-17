@@ -216,6 +216,24 @@
     file.copy(archivos_malloc, inla_bin_dir, overwrite = TRUE)
   }
 
+  # El binario busca exactamente "libpardiso.so" (sin numero de
+  # version), pero el archivo real que trae el paquete se llama
+  # "libpardiso8.so" (con el numero pegado al nombre, no como sufijo de
+  # version normal tipo .so.8). Creamos una copia con el nombre exacto
+  # que se espera (confirmado en despliegue del 17-jul-2026:
+  # "libpardiso.so: cannot open shared object file").
+  first_dir <- file.path(inla_bin_dir, "first")
+  libpardiso_esperado <- file.path(first_dir, "libpardiso.so")
+  if (dir.exists(first_dir) && !file.exists(libpardiso_esperado)) {
+    candidatos_pardiso <- list.files(
+      first_dir, pattern = "^libpardiso[0-9]*\\.so$", full.names = TRUE
+    )
+    if (length(candidatos_pardiso) > 0) {
+      file.copy(candidatos_pardiso[1], libpardiso_esperado, overwrite = TRUE)
+      Sys.chmod(libpardiso_esperado, mode = "0755")
+    }
+  }
+
   unlink(tmp_extract_dir, recursive = TRUE)
 
 
