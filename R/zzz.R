@@ -202,6 +202,20 @@
   origen <- dirname(ruta_inla[1])
   archivos_origen <- list.files(origen, full.names = TRUE, all.files = TRUE)
   file.copy(archivos_origen, inla_bin_dir, overwrite = TRUE, recursive = TRUE)
+
+  # El script inla.run solo agrega las carpetas "first/" y la carpeta
+  # principal a la ruta de busqueda de librerias -- NUNCA "malloc/".
+  # libjemalloc.so.2 vive en malloc/ en este build de Rocky Linux, asi
+  # que aunque se copia bien, el programa no lo encuentra al arrancar
+  # (confirmado en despliegue del 17-jul-2026: "libjemalloc.so.2: cannot
+  # open shared object file"). Lo copiamos tambien a la carpeta
+  # principal, que si esta en la ruta de busqueda.
+  malloc_dir <- file.path(inla_bin_dir, "malloc")
+  if (dir.exists(malloc_dir)) {
+    archivos_malloc <- list.files(malloc_dir, full.names = TRUE, all.files = TRUE)
+    file.copy(archivos_malloc, inla_bin_dir, overwrite = TRUE)
+  }
+
   unlink(tmp_extract_dir, recursive = TRUE)
 
 
