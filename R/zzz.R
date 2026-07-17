@@ -95,8 +95,14 @@
   marker_file <- file.path(inla_bin_dir, ".ubuntu2204_ok")
 
   # Si ya se reemplazo el binario antes en este mismo proceso, no hay
-  # que descargar de nuevo -- solo apuntar inla.call ahi.
+  # que descargar de nuevo -- solo apuntar inla.call ahi y reforzar el
+  # LD_PRELOAD (Sys.setenv no persiste garantizado entre llamadas si
+  # algo mas lo pisa en el medio).
   if (file.exists(marker_file)) {
+    libiomp5_path_cache <- file.path(inla_bin_dir, "libiomp5.so")
+    if (file.exists(libiomp5_path_cache)) {
+      Sys.setenv(LD_PRELOAD = libiomp5_path_cache)
+    }
     INLA::inla.setOption(inla.call = file.path(inla_bin_dir, "inla.run"))
     return(TRUE)
   }
@@ -250,6 +256,17 @@
   # Asegura permisos de ejecucion en los binarios
   bin_files <- list.files(inla_bin_dir, full.names = TRUE)
   Sys.chmod(bin_files, mode = "0755")
+
+  # libpardiso.so (ver arriba) usa simbolos de OpenMP de Intel
+  # (libiomp5.so, incluida en el paquete) pero no los tiene enlazados de
+  # forma directa -- necesita que esa libreria ya este cargada en
+  # memoria ANTES de que el sistema intente resolver esos simbolos.
+  # LD_PRELOAD fuerza esa carga temprana (confirmado en despliegue del
+  # 17-jul-2026: "undefined symbol: __kmpc_global_thread_num").
+  libiomp5_path <- file.path(inla_bin_dir, "libiomp5.so")
+  if (file.exists(libiomp5_path)) {
+    Sys.setenv(LD_PRELOAD = libiomp5_path)
+  }
 
   # Marca que ya se hizo, para no repetir la descarga en el mismo proceso
   file.create(marker_file)
