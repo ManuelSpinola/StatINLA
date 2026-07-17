@@ -76,10 +76,13 @@
   invisible(NULL)
 }
 
-#' Intento 1: reemplaza la carpeta 64bit de la instalacion de INLA con el
-#' binario compilado para Ubuntu 22.04.5 LTS. Elige la carpeta de version
-#' que coincide con el INLA instalado en este deploy; si no la encuentra,
-#' usa como respaldo la ultima version confirmada manualmente.
+#' Intento 1: reemplaza la carpeta 64bit de la instalacion de INLA con un
+#' binario compatible. Prueba primero el build de Rocky Linux 8.10
+#' (GLIBC 2.28, mas vieja que la de Ubuntu 22.04 -- compatible "hacia
+#' adelante", sugerido por Havard Rue el 16-jul-2026), luego el build
+#' "devel" de Ubuntu 22.04.5, y por ultimo las carpetas por numero de
+#' version de Ubuntu 22.04.5 (con respaldo a la ultima version
+#' confirmada manualmente si no hay coincidencia exacta).
 #'
 #' @return TRUE si se activo el binario de Ubuntu 22.04, FALSE si no.
 #' @noRd
@@ -118,11 +121,19 @@
 
   versiones_a_probar <- unique(stats::na.omit(c(instalada, LATEST_KNOWN_VERSION)))
 
-  # Håvard senalo una carpeta "devel/" (16-jul-2026) que segun el no
-  # requiere GLIBC 2.38 -- la probamos primero, antes que las carpetas
-  # por numero de version, porque es la sugerencia mas reciente y
-  # especifica que tenemos.
+  # Håvard senalo (16-jul-2026) que el build de Rocky Linux 8.10 le
+  # corre bien en su propia VM de Ubuntu 22.04. Tiene sentido tecnico:
+  # Rocky Linux 8 usa una version de GLIBC MAS VIEJA (2.28) que Ubuntu
+  # 22.04 (2.35), y GLIBC es compatible "hacia adelante" -- un binario
+  # que pide una version vieja corre bien en un sistema mas nuevo, al
+  # reves de lo que nos pasaba con el build "devel" (pedia 2.38 en un
+  # sistema con 2.35). La probamos primero.
   urls_a_probar <- c(
+    paste0(
+      "https://inla.r-inla-download.org/Linux-builds/",
+      "Rocky%20Linux-8.10%20(Green%20Obsidian)%20x86_64/",
+      "Version_", versiones_a_probar, "/64bit.tgz"
+    ),
     paste0(base_url, "devel/64bit.tgz"),
     paste0(base_url, "Version_", versiones_a_probar, "/64bit.tgz")
   )
@@ -201,7 +212,7 @@
 
   INLA::inla.setOption(inla.call = file.path(inla_bin_dir, "inla.run"))
   message(
-    "INLA configurado para usar binario de Ubuntu 22.04.5 (fuente: ",
+    "INLA configurado con binario alternativo (fuente: ",
     url_usada, "): ", file.path(inla_bin_dir, "inla.run")
   )
 
